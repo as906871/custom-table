@@ -12,7 +12,7 @@ import {
   addRow,
   updateCell,
   deleteRow,
-   reorderColumns,  // ADD THIS
+   reorderColumns, 
   reorderRows, 
 } from "../../../redux/reducer/tableReducer/TableReducer";
 import DeleteModal from "../../Common/DeleteModal";
