@@ -102,7 +102,7 @@ const TableHeader = ({
         {columns.map((column, idx) => (
           <th
             key={column.id}
-              draggable
+            draggable
             onDragStart={(e) => handleDragStart(e, column.id)}
             onDragOver={(e) => handleDragOver(e, column.id)}
             onDrop={(e) => handleDrop(e, column.id)}
@@ -129,6 +129,17 @@ const TableHeader = ({
               </div>
 
               <div className="flex gap-0.5 sm:gap-1 flex-shrink-0 items-center">
+
+                {idx === 0 && (
+                  <button
+                    onClick={onAddColumn}
+                    className="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-all shadow-md hover:shadow-lg"
+                    title="Add column"
+                  >
+                    <Plus size={12} className="sm:w-3.5 sm:h-3.5" />
+                  </button>
+                )}
+                
                 <button
                   onClick={() => onEditColumn(column)}
                   className="p-1 hover:bg-gray-200 rounded transition-colors"
@@ -144,7 +155,7 @@ const TableHeader = ({
                   <Trash2 size={14} className="sm:w-3.5 sm:h-3.5" />
                 </button>
 
-                {idx === columns.length - 1 && (
+                {/* {idx === columns.length - 1 && (
                   <button
                     onClick={onAddColumn}
                     className="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-all shadow-md hover:shadow-lg mr-1"
@@ -152,7 +163,7 @@ const TableHeader = ({
                   >
                     <Plus size={12} className="sm:w-3.5 sm:h-3.5" />
                   </button>
-                )}
+                )} */}
               </div>
             </div>
 

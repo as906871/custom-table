@@ -18,7 +18,8 @@ const tableSlice = createSlice({
         type: action.payload.type,
         options: action.payload.options || [],
       };
-      state.columns.push(newColumn);
+      // state.columns.push(newColumn);
+       state.columns.unshift(newColumn);
     },
 
     updateColumn: (state, action) => {
