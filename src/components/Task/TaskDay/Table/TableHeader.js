@@ -6,7 +6,7 @@ const TableHeader = ({
   onEditColumn,
   onDeleteColumn,
   onAddColumn,
-  onReorderColumns 
+  onReorderColumns,
 }) => {
   const [columnWidths, setColumnWidths] = useState({});
   const [resizingColumn, setResizingColumn] = useState(null);
@@ -59,8 +59,6 @@ const TableHeader = ({
     };
   }, [resizingColumn]);
 
-
-
   const [draggedColumn, setDraggedColumn] = useState(null);
   const [dragOverColumn, setDragOverColumn] = useState(null);
 
@@ -95,10 +93,6 @@ const TableHeader = ({
   return (
     <thead className="bg-gray-50 sticky top-0 z-10">
       <tr>
-        <th className="sticky left-0 z-10 bg-gray-50 px-2 sm:px-3 lg:px-4 py-2 sm:py-3 text-left text-xs font-semibold text-gray-600 uppercase w-12 sm:w-14 lg:w-16 border-r border-gray-200 shadow-sm">
-          No.
-        </th>
-
         {columns.map((column, idx) => (
           <th
             key={column.id}
@@ -108,28 +102,26 @@ const TableHeader = ({
             onDrop={(e) => handleDrop(e, column.id)}
             onDragEnd={handleDragEnd}
             className={`relative px-2 sm:px-3 lg:px-4 py-2 sm:py-3 text-left text-xs font-semibold text-gray-600 uppercase border-r border-gray-200 transition-all ${
-              draggedColumn === column.id ? 'opacity-50' : ''
-            } ${
-              dragOverColumn === column.id ? 'bg-blue-100' : ''
-            }`}
-            
+              draggedColumn === column.id ? "opacity-50" : ""
+            } ${dragOverColumn === column.id ? "bg-blue-100" : ""}`}
             // className="relative px-2 sm:px-3 lg:px-4 py-2 sm:py-3 text-left text-xs font-semibold text-gray-600 uppercase border-r border-gray-200"
             style={{
               width: `${getColumnWidth(column.id)}px`,
               minWidth: `${getColumnWidth(column.id)}px`,
               maxWidth: `${getColumnWidth(column.id)}px`,
-              cursor: 'move'
+              cursor: "move",
             }}
           >
             <div className="flex items-center justify-between gap-1 sm:gap-2">
-              {/* <div className="flex-1 truncate min-w-0"> */}
-                 <div className="flex items-center gap-1 flex-1 min-w-0">
-                <GripVertical size={14} className="text-gray-400 flex-shrink-0 sm:w-3.5 sm:h-3.5" />
+              <div className="flex items-center gap-1 flex-1 min-w-0">
+                <GripVertical
+                  size={14}
+                  className="text-gray-400 flex-shrink-0 sm:w-3.5 sm:h-3.5"
+                />
                 <div className="truncate text-xs sm:text-xs">{column.name}</div>
               </div>
 
               <div className="flex gap-0.5 sm:gap-1 flex-shrink-0 items-center">
-
                 {idx === 0 && (
                   <button
                     onClick={onAddColumn}
@@ -139,7 +131,7 @@ const TableHeader = ({
                     <Plus size={12} className="sm:w-3.5 sm:h-3.5" />
                   </button>
                 )}
-                
+
                 <button
                   onClick={() => onEditColumn(column)}
                   className="p-1 hover:bg-gray-200 rounded transition-colors"
@@ -178,9 +170,12 @@ const TableHeader = ({
           </th>
         ))}
 
-        {/* <th className="sticky right-0 z-30 bg-gray-50 px-2 sm:px-3 lg:px-4 py-2 sm:py-3 text-center text-xs font-semibold text-gray-600 uppercase w-16 sm:w-20 lg:w-24 border-l border-gray-200 shadow-sm">
+        <th className="sticky right-[4rem] sm:right-[6rem] md:right-[7rem] lg:right-[6rem] z-30 bg-gray-50 px-3 py-2 text-center text-xs font-semibold text-gray-600 uppercase w-20 border-l border-gray-200 shadow-sm">
+          No.
+        </th>
+        <th className="sticky right-0 z-30 bg-gray-50 px-3 py-2 text-center text-xs font-semibold text-gray-600 uppercase w-24 border-l border-gray-200 shadow-sm">
           Actions
-        </th> */}
+        </th>
       </tr>
     </thead>
   );

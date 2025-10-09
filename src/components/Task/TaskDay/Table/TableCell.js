@@ -101,10 +101,52 @@ const TableCell = ({ row, column, onCellChange }) => {
     );
   };
 
-  const inputClassName = "w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all";
+  const inputClassName =
+    "w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all";
+
+  const getContrastColor = (bgColor) => {
+    if (!bgColor) return "#000000";
+    const color = bgColor.replace("#", "");
+    const r = parseInt(color.substr(0, 2), 16);
+    const g = parseInt(color.substr(2, 2), 16);
+    const b = parseInt(color.substr(4, 2), 16);
+    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+    return brightness > 128 ? "#000000" : "#FFFFFF";
+  };
 
   switch (column.type) {
     case "text":
+      if (typeof cellValue === "object" && cellValue !== null) {
+        if (cellValue.users) {
+          return (
+            <div className="flex flex-wrap gap-1">
+              {cellValue.users.map((user, idx) => (
+                <span
+                  key={idx}
+                  className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
+                >
+                  {user.user}
+                </span>
+              ))}
+            </div>
+          );
+        } else if (cellValue.color) {
+          return (
+            <div
+              className="inline-flex items-center px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium"
+              style={{
+                backgroundColor: cellValue.color,
+                color: getContrastColor(cellValue.color),
+              }}
+            >
+              {cellValue.text}
+            </div>
+          );
+        }
+        return (
+          <span className="text-xs sm:text-sm">{cellValue.text || ""}</span>
+        );
+      }
       return (
         <input
           type="text"
@@ -142,19 +184,60 @@ const TableCell = ({ row, column, onCellChange }) => {
       return renderFileCell();
 
     case "single-select":
+      const displayValue =
+        typeof cellValue === "object" && cellValue !== null
+          ? cellValue.text
+          : cellValue;
+      const cellColor =
+        typeof cellValue === "object" && cellValue !== null
+          ? cellValue.color
+          : null;
+
       return (
-        <select
-          value={cellValue}
-          onChange={(e) => handleChange(e.target.value)}
-          className={inputClassName}
-        >
-          <option value="">Select option</option>
-          {column.options?.map((option, idx) => (
-            <option key={idx} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
+        <div>
+          <select
+            value={displayValue || ""}
+            onChange={(e) => {
+              const selectedOption = column.options?.find(
+                (opt) =>
+                  (typeof opt === "object" ? opt.text : opt) === e.target.value
+              );
+              handleChange(selectedOption || e.target.value);
+            }}
+            className={inputClassName}
+            style={
+              cellColor
+                ? {
+                    backgroundColor: cellColor,
+                    color: getContrastColor(cellColor),
+                    fontWeight: "500",
+                  }
+                : {}
+            }
+          >
+            <option value="">Select option</option>
+            {column.options?.map((option, idx) => {
+              const optText = typeof option === "object" ? option.text : option;
+              const optColor = typeof option === "object" ? option.color : null;
+              return (
+                <option
+                  key={idx}
+                  value={optText}
+                  style={
+                    optColor
+                      ? {
+                          backgroundColor: optColor,
+                          color: getContrastColor(optColor),
+                        }
+                      : {}
+                  }
+                >
+                  {optText}
+                </option>
+              );
+            })}
+          </select>
+        </div>
       );
 
     case "multi-select":

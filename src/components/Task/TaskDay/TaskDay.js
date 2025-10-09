@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Plus } from "lucide-react";
 import EmptyState from "../TaskDay/Table/EmptyState";
@@ -12,14 +12,17 @@ import {
   addRow,
   updateCell,
   deleteRow,
-   reorderColumns, 
-  reorderRows, 
+  reorderColumns,
+  reorderRows,
 } from "../../../redux/reducer/tableReducer/TableReducer";
 import DeleteModal from "../../Common/DeleteModal";
+import { GetTableSheetData } from "../../../redux/action/tableAction/TableAction";
 
 const Task = () => {
   const dispatch = useDispatch();
-  const { columns, rows } = useSelector((state) => state.table);
+  const { columns, rows, tableData, tableLoading, tableError } = useSelector(
+    (state) => state.table
+  );
 
   const [showColumnModal, setShowColumnModal] = useState(false);
   const [editingColumn, setEditingColumn] = useState(null);
@@ -29,7 +32,6 @@ const Task = () => {
     options: [],
   });
   const [optionInput, setOptionInput] = useState("");
-
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
 
@@ -57,7 +59,6 @@ const Task = () => {
     } else {
       dispatch(addColumn(columnForm));
     }
-
     setShowColumnModal(false);
     setColumnForm({ name: "", type: "text", options: [] });
     setOptionInput("");
@@ -93,8 +94,7 @@ const Task = () => {
     dispatch(updateCell({ rowId, columnId, value }));
   };
 
-
-    const handleReorderColumns = (fromIndex, toIndex) => {
+  const handleReorderColumns = (fromIndex, toIndex) => {
     dispatch(reorderColumns({ fromIndex, toIndex }));
   };
 
@@ -102,14 +102,46 @@ const Task = () => {
     dispatch(reorderRows({ draggedRowId, targetRowId }));
   };
 
+  useEffect(() => {
+    dispatch(GetTableSheetData(86, 158));
+  }, [dispatch]);
+
+  if (tableLoading) {
+    return (
+      <div className="w-full h-full flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading table data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (tableError) {
+    return (
+      <div className="w-full h-full flex items-center justify-center">
+        <div className="text-center text-red-600">
+          <p className="text-lg font-semibold mb-2">Error loading data</p>
+          <p className="text-sm">{tableError}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full h-full flex flex-col">
-
       <div className="flex-shrink-0 bg-white border-b border-gray-200 px-3 sm:px-4 lg:px-6 py-3 sm:py-4">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Table</h2>
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-800">
+            Table{" "}
+            {tableData && (
+              <span className="text-sm text-gray-500 font-normal ml-2">
+                ({tableData.data?.[0]?.name})
+              </span>
+            )}
+          </h2>
           <div className="flex gap-2">
-            {columns.length === 0 && (
+            {columns?.length === 0 && (
               <button
                 onClick={handleAddColumn}
                 className="flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 bg-blue-600 text-white text-sm sm:text-base rounded-lg hover:bg-blue-700 transition-colors flex-1 sm:flex-initial"
@@ -118,7 +150,7 @@ const Task = () => {
                 <span className="whitespace-nowrap">Add Column</span>
               </button>
             )}
-            {rows.length === 0 && (
+            {rows?.length === 0 && columns.length > 0 && (
               <button
                 onClick={handleAddRow}
                 className="flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 bg-green-600 text-white text-sm sm:text-base rounded-lg hover:bg-green-700 transition-colors flex-1 sm:flex-initial"
@@ -148,16 +180,16 @@ const Task = () => {
                   onReorderColumns={handleReorderColumns}
                 />
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {rows.length === 0 ? (
+                  {rows?.length === 0 ? (
                     <tr>
                       <td colSpan={columns.length + 2} className="p-4">
-                        <EmptyState type="rows" />
+                        <EmptyState type="rows" onAction={handleAddRow} />
                       </td>
                     </tr>
                   ) : (
                     rows.map((row, index) => (
                       <TableRow
-                        key={row.id}
+                        key={row?.id}
                         row={row}
                         index={index}
                         columns={columns}
