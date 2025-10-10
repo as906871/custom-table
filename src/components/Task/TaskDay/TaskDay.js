@@ -24,6 +24,9 @@ const Task = () => {
     (state) => state.table
   );
 
+  const { position } = useSelector((state) => state.sidebar);
+  const sidebarOnRight = position === "left";
+
   const [showColumnModal, setShowColumnModal] = useState(false);
   const [editingColumn, setEditingColumn] = useState(null);
   const [columnForm, setColumnForm] = useState({
@@ -178,6 +181,7 @@ const Task = () => {
                   onDeleteColumn={handleDeleteColumn}
                   onAddColumn={handleAddColumn}
                   onReorderColumns={handleReorderColumns}
+                  sidebarOnRight={sidebarOnRight}
                 />
                 <tbody className="bg-white divide-y divide-gray-200">
                   {rows?.length === 0 ? (
@@ -198,6 +202,7 @@ const Task = () => {
                         isLastRow={index === rows.length - 1}
                         onAddRow={handleAddRow}
                         onReorderRows={handleReorderRows}
+                        sidebarOnRight={sidebarOnRight}
                       />
                     ))
                   )}

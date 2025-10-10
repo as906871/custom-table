@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { X, Upload, Eye } from "lucide-react";
+import { X, Upload } from "lucide-react";
 import MultiSelectCell from "./MultiSelect";
 
 const TableCell = ({ row, column, onCellChange }) => {

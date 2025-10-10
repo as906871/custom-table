@@ -7,6 +7,7 @@ const TableHeader = ({
   onDeleteColumn,
   onAddColumn,
   onReorderColumns,
+  sidebarOnRight,
 }) => {
   const [columnWidths, setColumnWidths] = useState({});
   const [resizingColumn, setResizingColumn] = useState(null);
@@ -93,6 +94,17 @@ const TableHeader = ({
   return (
     <thead className="bg-gray-50 sticky top-0 z-10">
       <tr>
+        {sidebarOnRight && (
+          <>
+            <th className="sticky left-0 z-30 bg-gray-50 px-3 py-2 text-center text-xs font-semibold text-gray-600 uppercase w-24 border-r border-gray-200 shadow-sm">
+              Actions
+            </th>
+            <th className="sticky left-[6rem] z-30 bg-gray-50 px-3 py-2 text-center text-xs font-semibold text-gray-600 uppercase w-20 border-r border-gray-200 shadow-sm">
+              No.
+            </th>
+          </>
+        )}
+
         {columns.map((column, idx) => (
           <th
             key={column.id}
@@ -104,7 +116,6 @@ const TableHeader = ({
             className={`relative px-2 sm:px-3 lg:px-4 py-2 sm:py-3 text-left text-xs font-semibold text-gray-600 uppercase border-r border-gray-200 transition-all ${
               draggedColumn === column.id ? "opacity-50" : ""
             } ${dragOverColumn === column.id ? "bg-blue-100" : ""}`}
-            // className="relative px-2 sm:px-3 lg:px-4 py-2 sm:py-3 text-left text-xs font-semibold text-gray-600 uppercase border-r border-gray-200"
             style={{
               width: `${getColumnWidth(column.id)}px`,
               minWidth: `${getColumnWidth(column.id)}px`,
@@ -113,50 +124,83 @@ const TableHeader = ({
             }}
           >
             <div className="flex items-center justify-between gap-1 sm:gap-2">
-              <div className="flex items-center gap-1 flex-1 min-w-0">
-                <GripVertical
-                  size={14}
-                  className="text-gray-400 flex-shrink-0 sm:w-3.5 sm:h-3.5"
-                />
-                <div className="truncate text-xs sm:text-xs">{column.name}</div>
-              </div>
+              {!sidebarOnRight && (
+                <div className="flex gap-0.5 sm:gap-1 flex-shrink-0 items-center">
+                  {idx === 0 && (
+                    <button
+                      onClick={onAddColumn}
+                      className="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-all shadow-md hover:shadow-lg"
+                      title="Add column"
+                    >
+                      <Plus size={12} className="sm:w-3.5 sm:h-3.5" />
+                    </button>
+                  )}
 
-              <div className="flex gap-0.5 sm:gap-1 flex-shrink-0 items-center">
-                {idx === 0 && (
                   <button
-                    onClick={onAddColumn}
-                    className="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-all shadow-md hover:shadow-lg"
-                    title="Add column"
+                    onClick={() => onEditColumn(column)}
+                    className="p-1 hover:bg-gray-200 rounded transition-colors"
+                    title="Edit column"
                   >
-                    <Plus size={12} className="sm:w-3.5 sm:h-3.5" />
+                    <Edit2 size={14} className="sm:w-3.5 sm:h-3.5" />
                   </button>
+                  <button
+                    onClick={() => onDeleteColumn(column.id)}
+                    className="p-1 hover:bg-red-100 text-red-600 rounded transition-colors"
+                    title="Delete column"
+                  >
+                    <Trash2 size={14} className="sm:w-3.5 sm:h-3.5" />
+                  </button>
+                </div>
+              )}
+
+              <div
+                className={`flex items-center gap-1 flex-1 min-w-0 ${
+                  sidebarOnRight ? "justify-start" : "justify-end"
+                }`}
+              >
+                {sidebarOnRight && (
+                  <GripVertical
+                    size={14}
+                    className="text-gray-400 flex-shrink-0 sm:w-3.5 sm:h-3.5"
+                  />
                 )}
-
-                <button
-                  onClick={() => onEditColumn(column)}
-                  className="p-1 hover:bg-gray-200 rounded transition-colors"
-                  title="Edit column"
-                >
-                  <Edit2 size={14} className="sm:w-3.5 sm:h-3.5" />
-                </button>
-                <button
-                  onClick={() => onDeleteColumn(column.id)}
-                  className="p-1 hover:bg-red-100 text-red-600 rounded transition-colors"
-                  title="Delete column"
-                >
-                  <Trash2 size={14} className="sm:w-3.5 sm:h-3.5" />
-                </button>
-
-                {/* {idx === columns.length - 1 && (
-                  <button
-                    onClick={onAddColumn}
-                    className="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-all shadow-md hover:shadow-lg mr-1"
-                    title="Add column"
-                  >
-                    <Plus size={12} className="sm:w-3.5 sm:h-3.5" />
-                  </button>
-                )} */}
+                <div className="truncate text-xs sm:text-xs">{column.name}</div>
+                {!sidebarOnRight && (
+                  <GripVertical
+                    size={14}
+                    className="text-gray-400 flex-shrink-0 sm:w-3.5 sm:h-3.5"
+                  />
+                )}
               </div>
+
+              {sidebarOnRight && (
+                <div className="flex gap-0.5 sm:gap-1 flex-shrink-0 items-center">
+                  <button
+                    onClick={() => onEditColumn(column)}
+                    className="p-1 hover:bg-gray-200 rounded transition-colors"
+                    title="Edit column"
+                  >
+                    <Edit2 size={14} className="sm:w-3.5 sm:h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => onDeleteColumn(column.id)}
+                    className="p-1 hover:bg-red-100 text-red-600 rounded transition-colors"
+                    title="Delete column"
+                  >
+                    <Trash2 size={14} className="sm:w-3.5 sm:h-3.5" />
+                  </button>
+
+                  {idx === columns.length - 1 && (
+                    <button
+                      onClick={onAddColumn}
+                      className="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-all shadow-md hover:shadow-lg"
+                      title="Add column"
+                    >
+                      <Plus size={12} className="sm:w-3.5 sm:h-3.5" />
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
 
             <div
@@ -170,12 +214,16 @@ const TableHeader = ({
           </th>
         ))}
 
-        <th className="sticky right-[4rem] sm:right-[6rem] md:right-[7rem] lg:right-[6rem] z-30 bg-gray-50 px-3 py-2 text-center text-xs font-semibold text-gray-600 uppercase w-20 border-l border-gray-200 shadow-sm">
-          No.
-        </th>
-        <th className="sticky right-0 z-30 bg-gray-50 px-3 py-2 text-center text-xs font-semibold text-gray-600 uppercase w-24 border-l border-gray-200 shadow-sm">
-          Actions
-        </th>
+        {!sidebarOnRight && (
+          <>
+            <th className="sticky right-[4rem] sm:right-[6rem] md:right-[7rem] lg:right-[6rem] z-30 bg-gray-50 px-3 py-2 text-center text-xs font-semibold text-gray-600 uppercase w-20 border-l border-gray-200 shadow-sm">
+              No.
+            </th>
+            <th className="sticky right-0 z-30 bg-gray-50 px-3 py-2 text-center text-xs font-semibold text-gray-600 uppercase w-24 border-l border-gray-200 shadow-sm">
+              Actions
+            </th>
+          </>
+        )}
       </tr>
     </thead>
   );
