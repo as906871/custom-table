@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Trash2, Plus, GripVertical } from "lucide-react";
+import { Trash2, Plus, GripVertical, CheckSquare, Square } from "lucide-react";
 import TableCell from "./TableCell";
 
 const TableRow = ({
@@ -12,19 +12,23 @@ const TableRow = ({
   onAddRow,
   onReorderRows,
   sidebarOnRight,
+  onDragStart,
+  onDragEnd,
+  isSelected,
+  onSelectRow,
+  isDragging,
 }) => {
-  const [isDragging, setIsDragging] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
 
-  console.log("row", row?.id);
   const handleDragStart = (e) => {
-    setIsDragging(true);
     e.dataTransfer.effectAllowed = "move";
     e.dataTransfer.setData("text/plain", row?.id);
+    onDragStart(row?.id);
   };
 
   const handleDragOver = (e) => {
     e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
     setIsDragOver(true);
   };
 
@@ -34,16 +38,15 @@ const TableRow = ({
 
   const handleDrop = (e) => {
     e.preventDefault();
-    const draggedRowId = e.dataTransfer.getData("text/plain");
-    if (draggedRowId && draggedRowId !== row.id) {
-      onReorderRows(draggedRowId, row.id);
-    }
+    onReorderRows(row?.id);
     setIsDragOver(false);
   };
 
   const handleDragEnd = () => {
-    setIsDragging(false);
+    onDragEnd();
   };
+
+  const displayColumns = sidebarOnRight ? [...columns].reverse() : columns;
 
   return (
     <tr
@@ -55,11 +58,26 @@ const TableRow = ({
       onDragEnd={handleDragEnd}
       className={`border-b border-gray-200 hover:bg-gray-50 transition-colors ${
         isDragging ? "opacity-50" : ""
-      } ${isDragOver ? "bg-blue-50 border-blue-300" : ""}`}
+      } ${isDragOver ? "bg-blue-50 border-blue-300" : ""} 
+      ${isSelected ? "bg-blue-50" : ""}`}
     >
-       {sidebarOnRight && (
+      {sidebarOnRight && (
         <>
-          <td className="sticky left-0 z-0 bg-white hover:bg-gray-50 px-2 sm:px-3 lg:px-4 py-2 sm:py-3 text-center border-r border-gray-200 shadow-sm">
+          <td className="sticky left-0 z-0 bg-white hover:bg-gray-50 px-3 py-2 text-center border-r border-gray-200 shadow-sm">
+            <button
+              onClick={() => onSelectRow(row?.id)}
+              className="p-1 hover:bg-gray-200 rounded transition-colors"
+              title={isSelected ? "Deselect row" : "Select row"}
+            >
+              {isSelected ? (
+                <CheckSquare size={18} className="text-blue-600" />
+              ) : (
+                <Square size={18} className="text-gray-400" />
+              )}
+            </button>
+          </td>
+
+          <td className="sticky left-10 z-0 bg-white hover:bg-gray-50 px-2 sm:px-3 lg:px-4 py-2 sm:py-3 text-center border-r border-gray-200 shadow-sm">
             <div className="flex items-center justify-center gap-2">
               {isLastRow && (
                 <button
@@ -81,7 +99,7 @@ const TableRow = ({
             </div>
           </td>
 
-          <td className="sticky left-[6rem] z-0 bg-white hover:bg-gray-50 px-2 sm:px-3 lg:px-4 py-2 sm:py-3 text-xs sm:text-sm text-gray-600 font-medium border-r border-gray-200 shadow-sm">
+          <td className="sticky left-[8rem] z-0 bg-white hover:bg-gray-50 px-2 sm:px-3 lg:px-4 py-2 sm:py-3 text-xs sm:text-sm text-gray-600 font-medium border-r border-gray-200 shadow-sm">
             <div className="flex items-center gap-1 justify-center">
               <GripVertical
                 size={14}
@@ -92,7 +110,8 @@ const TableRow = ({
           </td>
         </>
       )}
-      {columns.map((column) => (
+      {/* {columns.map((column) => ( */}
+      {displayColumns.map((column) => (
         <td
           key={column.id}
           className="px-2 sm:px-3 lg:px-4 py-2 sm:py-3 border-r border-gray-200"
@@ -101,9 +120,9 @@ const TableRow = ({
         </td>
       ))}
 
-       {!sidebarOnRight && (
+      {!sidebarOnRight && (
         <>
-          <td className="sticky right-[5rem] sm:right-[6rem] md:right-[7rem] lg:right-[6rem] z-0 bg-white hover:bg-gray-50 px-2 sm:px-3 lg:px-4 py-2 sm:py-3 text-xs sm:text-sm text-gray-600 font-medium border-r border-gray-200 shadow-sm">
+          <td className="sticky right-[8rem] z-0 bg-white hover:bg-gray-50 px-2 sm:px-3 lg:px-4 py-2 sm:py-3 text-xs sm:text-sm text-gray-600 font-medium border-r border-gray-200 shadow-sm">
             <div className="flex items-center gap-1">
               <span>{row?.id?.replace(/^row_/, "")}</span>
               <GripVertical
@@ -113,7 +132,7 @@ const TableRow = ({
             </div>
           </td>
 
-          <td className="sticky right-0 z-0 bg-white hover:bg-gray-50 px-2 sm:px-3 lg:px-4 py-2 sm:py-3 text-center border-l border-gray-200 shadow-sm">
+          <td className="sticky right-10 z-0 bg-white hover:bg-gray-50 px-2 sm:px-3 lg:px-4 py-2 sm:py-3 text-center border-l border-gray-200 shadow-sm">
             <div className="flex items-center justify-end gap-2">
               <button
                 onClick={() => onDeleteRow(row.id)}
@@ -133,6 +152,20 @@ const TableRow = ({
                 </button>
               )}
             </div>
+          </td>
+
+          <td className="sticky right-0 z-20 bg-white hover:bg-gray-50 px-3 py-2 text-center border-l border-gray-200 shadow-sm">
+            <button
+              onClick={() => onSelectRow(row?.id)}
+              className="p-1 hover:bg-gray-200 rounded transition-colors"
+              title={isSelected ? "Deselect row" : "Select row"}
+            >
+              {isSelected ? (
+                <CheckSquare size={18} className="text-blue-600" />
+              ) : (
+                <Square size={18} className="text-gray-400" />
+              )}
+            </button>
           </td>
         </>
       )}

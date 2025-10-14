@@ -7,6 +7,7 @@ const initialState = {
   tableData: null,
   tableLoading: false,
   tableError: null,
+  selectedRows: [],
 };
 
 const tableSlice = createSlice({
@@ -52,20 +53,65 @@ const tableSlice = createSlice({
     deleteRow: (state, action) => {
       const rowId = action.payload;
       state.rows = state.rows.filter((row) => row.id !== rowId);
+      state.selectedRows = state.selectedRows.filter((id) => id !== rowId);
     },
     updateCell: (state, action) => {
       const { rowId, columnId, value } = action.payload;
       const row = state.rows.find((r) => r.id === rowId);
-      if (row) {
-        row.data[columnId] = value;
+      // if (row) {
+      //   row.data[columnId] = value;
+      // }
+        if (row) {
+        const column = state.columns.find((col) => col.id === columnId);
+        if (column && column.type === 'file' && Array.isArray(value)) {
+          row.data[columnId] = value;
+        } else {
+          row.data[columnId] = value;
+        }
       }
+    },
+
+    selectRow: (state, action) => {
+      const rowId = action.payload;
+      const index = state.selectedRows.indexOf(rowId);
+
+      if (index > -1) {
+        state.selectedRows.splice(index, 1);
+      } else {
+        state.selectedRows.push(rowId);
+      }
+    },
+
+    selectAllRows: (state) => {
+      if (state.selectedRows.length === state.rows.length) {
+        state.selectedRows = [];
+      } else {
+        state.selectedRows = state.rows.map((row) => row.id);
+      }
+    },
+
+    selectMultipleRows: (state, action) => {
+      state.selectedRows = action.payload;
+    },
+
+    clearSelection: (state) => {
+      state.selectedRows = [];
+    },
+
+    deleteSelectedRows: (state) => {
+      state.rows = state.rows.filter(
+        (row) => !state.selectedRows.includes(row.id)
+      );
+      state.selectedRows = [];
     },
     clearTable: (state) => {
       state.columns = [];
       state.rows = [];
+      state.selectedRows = [];
     },
     clearRows: (state) => {
       state.rows = [];
+      state.selectedRows = [];
     },
     reorderColumns: (state, action) => {
       const { fromIndex, toIndex } = action.payload;
@@ -83,6 +129,27 @@ const tableSlice = createSlice({
         state.rows.splice(toIndex, 0, movedRow);
       }
     },
+
+    reorderSelectedRows: (state, action) => {
+      const { draggedRowIds, targetRowId } = action.payload;
+
+      const targetIndex = state.rows.findIndex((row) => row.id === targetRowId);
+      if (targetIndex === -1) return;
+
+      const draggedRows = draggedRowIds
+        .map((id) => state.rows.find((row) => row.id === id))
+        .filter(Boolean);
+
+      const remainingRows = state.rows.filter(
+        (row) => !draggedRowIds.includes(row.id)
+      );
+
+      const newRows = [...remainingRows];
+      newRows.splice(targetIndex, 0, ...draggedRows);
+
+      state.rows = newRows;
+    },
+
     fetchTableDataStart: (state) => {
       state.tableLoading = true;
       state.tableError = null;
@@ -91,6 +158,7 @@ const tableSlice = createSlice({
       state.tableLoading = false;
       state.tableData = action.payload;
       state.tableError = null;
+      state.selectedRows = [];
 
       if (
         action.payload &&
@@ -305,6 +373,13 @@ export const {
   fetchTableDataStart,
   fetchTableDataSuccess,
   fetchTableDataFailure,
+
+  selectRow,
+  selectAllRows,
+  selectMultipleRows,
+  clearSelection,
+  deleteSelectedRows,
+  reorderSelectedRows,
 } = tableSlice.actions;
 
 export default tableSlice.reducer;

@@ -4,7 +4,11 @@ import MultiSelectCell from "./MultiSelect";
 
 const TableCell = ({ row, column, onCellChange }) => {
   const cellValue = row.data[column.id] || "";
-  const [showImagePreview, setShowImagePreview] = useState(false);
+  // const [showImagePreview, setShowImagePreview] = useState(false);
+  const [showImagePreview, setShowImagePreview] = useState(null);
+  const [showAllFiles, setShowAllFiles] = useState(false);
+  const [hoveredImage, setHoveredImage] = useState(null);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
   const handleChange = (value) => {
     onCellChange(row.id, column.id, value);
@@ -15,14 +19,35 @@ const TableCell = ({ row, column, onCellChange }) => {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        handleChange({
+        const newFile = {
           name: file.name,
           type: file.type,
           preview: reader.result,
-        });
+        };
+
+        console.log("Current cellValue:", cellValue);
+
+        let currentFiles = [];
+        if (Array.isArray(cellValue)) {
+          currentFiles = [...cellValue];
+        } else if (
+          cellValue &&
+          typeof cellValue === "object" &&
+          cellValue.name
+        ) {
+          currentFiles = [cellValue];
+          console.log("Cell value is single object, converting to array");
+        } else if (cellValue && cellValue !== "") {
+          console.log("Cell value is something else:", cellValue);
+        }
+
+        const newFiles = [...currentFiles, newFile];
+        // console.log("Setting new files array with length:", newFiles.length);
+        handleChange(newFiles);
       };
       reader.readAsDataURL(file);
     }
+    e.target.value = "";
   };
 
   const removeFile = () => {
@@ -30,70 +55,184 @@ const TableCell = ({ row, column, onCellChange }) => {
   };
 
   const renderFileCell = () => {
-    const isImage = cellValue?.type?.startsWith("image/");
-    const hasFile =
-      cellValue && (typeof cellValue === "object" ? cellValue.name : cellValue);
+    const files = Array.isArray(cellValue)
+      ? cellValue
+      : cellValue
+      ? [cellValue]
+      : [];
+    const displayFiles = files.slice(0, 2);
+    const remainingCount = files.length > 2 ? files.length - 2 : 0;
+
+    const handleMouseMove = (e) => {
+      setMousePosition({ x: e.clientX, y: e.clientY });
+    };
 
     return (
       <div className="space-y-2">
-        {!hasFile ? (
-          <label className="flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 border-2 border-dashed border-gray-300 rounded cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-colors">
-            <Upload size={14} className="text-gray-500 sm:w-4 sm:h-4" />
-            <span className="text-xs sm:text-sm text-gray-600">Upload</span>
+        <div className="flex flex-wrap gap-2 items-center">
+          {displayFiles.map((file, index) => {
+            const isImage = file?.type?.startsWith("image/");
+            return (
+              <div key={index}>
+                {isImage && file.preview ? (
+                  <img
+                    src={file.preview}
+                    alt=""
+                    className="w-8 h-8 sm:w-10 sm:h-10 object-cover rounded-full border-2 border-gray-300 cursor-pointer hover:border-blue-500 transition-all"
+                    onClick={() => setShowImagePreview(file.preview)}
+                    onMouseEnter={(e) => {
+                      setHoveredImage(file.preview);
+                      handleMouseMove(e);
+                    }}
+                    onMouseMove={handleMouseMove}
+                    onMouseLeave={() => setHoveredImage(null)}
+                  />
+                ) : (
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center bg-gray-300 text-gray-600 text-xs rounded-full border-2 border-gray-300 font-semibold">
+                    {file.name?.split(".").pop()?.toUpperCase().slice(0, 3) ||
+                      "FILE"}
+                  </div>
+                )}
+                <button
+                  onClick={() => {
+                    const newFiles = files.filter((_, i) => i !== index);
+                    handleChange(newFiles.length > 0 ? newFiles : "");
+                  }}
+                  className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center hover:bg-red-600 z-10"
+                  title="Remove file"
+                  type="button"
+                >
+                  <X size={12} />
+                </button>
+              </div>
+            );
+          })}
+
+          {remainingCount > 0 && (
+            <div
+              className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center bg-blue-500 text-white text-xs sm:text-sm rounded-full border-2 border-blue-400 font-bold cursor-pointer hover:bg-blue-600 transition-all"
+              title={`${remainingCount} more file${
+                remainingCount > 1 ? "s" : ""
+              }`}
+              onClick={() => setShowAllFiles(true)}
+            >
+              +{remainingCount}
+            </div>
+          )}
+
+          <label className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center border-2 border-dashed border-gray-300 rounded-full cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-colors flex-shrink-0">
+            <Upload size={16} className="text-gray-500" />
             <input type="file" onChange={handleFileChange} className="hidden" />
           </label>
-        ) : (
-          <div className="flex items-center gap-1 sm:gap-2 border border-gray-200 rounded-md p-1">
-            {isImage && cellValue.preview ? (
-              <img
-                src={cellValue.preview}
-                alt={cellValue.name}
-                className="w-12 h-10 sm:w-16 sm:h-12 object-cover rounded border border-gray-200 cursor-pointer flex-shrink-0"
-                onClick={() => setShowImagePreview(true)}
-              />
-            ) : (
-              <div className="w-12 h-10 sm:w-16 sm:h-12 flex items-center justify-center bg-gray-200 text-gray-500 text-xs rounded flex-shrink-0">
-                File
-              </div>
-            )}
+        </div>
 
-            <span className="text-xs sm:text-sm text-gray-700 flex-1 truncate min-w-0">
-              {typeof cellValue === "object"
-                ? cellValue.name.length > 12
-                  ? cellValue.name.slice(0, 12) + "..."
-                  : cellValue.name
-                : cellValue}
-            </span>
-
-            <button
-              onClick={removeFile}
-              className="p-1 hover:bg-red-100 text-red-600 rounded flex-shrink-0"
-              title="Remove file"
-              type="button"
-            >
-              <X size={14} className="sm:w-4 sm:h-4" />
-            </button>
+        {hoveredImage && (
+          <div
+            className="fixed z-[100] pointer-events-none"
+            style={{
+              left: `${mousePosition.x + 20}px`,
+              top: `${mousePosition.y + 20}px`,
+            }}
+          >
+            <img
+              src={hoveredImage}
+              alt="Preview"
+              className="w-48 h-48 object-cover rounded-lg shadow-2xl border-4 border-white"
+            />
           </div>
         )}
 
-        {isImage && showImagePreview && cellValue.preview && (
+        {showImagePreview && (
           <div
             className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
-            onClick={() => setShowImagePreview(false)}
+            onClick={() => setShowImagePreview(null)}
           >
             <div className="relative max-w-4xl max-h-[90vh]">
               <button
-                onClick={() => setShowImagePreview(false)}
+                onClick={() => setShowImagePreview(null)}
                 className="absolute -top-10 right-0 sm:-top-12 p-2 bg-white rounded-full hover:bg-gray-100"
                 type="button"
               >
                 <X size={20} />
               </button>
               <img
-                src={cellValue.preview}
-                alt={cellValue.name}
+                src={showImagePreview}
+                alt=""
                 className="max-w-full max-h-[85vh] object-contain rounded"
               />
+            </div>
+          </div>
+        )}
+
+        {showAllFiles && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
+            onClick={() => setShowAllFiles(false)}
+          >
+            <div
+              className="bg-white rounded-lg p-6 max-w-2xl max-h-[80vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-800">
+                  All Files ({files.length})
+                </h3>
+                <button
+                  onClick={() => setShowAllFiles(false)}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                  type="button"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-4">
+                {files.map((file, index) => {
+                  const isImage = file?.type?.startsWith("image/");
+                  return (
+                    <div key={index} className="relative group">
+                      {isImage && file.preview ? (
+                        <img
+                          src={file.preview}
+                          alt=""
+                          className="w-full h-24 object-cover rounded-lg border-2 border-gray-300 cursor-pointer hover:border-blue-500 transition-all"
+                          onClick={() => {
+                            setShowAllFiles(false);
+                            setShowImagePreview(file.preview);
+                          }}
+                        />
+                      ) : (
+                        <div className="w-full h-24 flex flex-col items-center justify-center bg-gray-200 text-gray-600 text-xs rounded-lg border-2 border-gray-300 font-semibold">
+                          <span>
+                            {file.name
+                              ?.split(".")
+                              .pop()
+                              ?.toUpperCase()
+                              .slice(0, 3) || "FILE"}
+                          </span>
+                          <span className="text-[10px] mt-1 px-2 truncate w-full text-center">
+                            {file.name}
+                          </span>
+                        </div>
+                      )}
+                      <button
+                        onClick={() => {
+                          const newFiles = files.filter((_, i) => i !== index);
+                          handleChange(newFiles.length > 0 ? newFiles : "");
+                          if (newFiles.length <= 2) {
+                            setShowAllFiles(false);
+                          }
+                        }}
+                        className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center hover:bg-red-600 shadow-lg"
+                        title="Remove file"
+                        type="button"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         )}

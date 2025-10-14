@@ -1,5 +1,12 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Trash2, Edit2, Plus, GripVertical } from "lucide-react";
+import {
+  Trash2,
+  Edit2,
+  Plus,
+  GripVertical,
+  CheckSquare,
+  Square,
+} from "lucide-react";
 
 const TableHeader = ({
   columns,
@@ -8,6 +15,8 @@ const TableHeader = ({
   onAddColumn,
   onReorderColumns,
   sidebarOnRight,
+  allSelected,
+  onSelectAll,
 }) => {
   const [columnWidths, setColumnWidths] = useState({});
   const [resizingColumn, setResizingColumn] = useState(null);
@@ -91,136 +100,176 @@ const TableHeader = ({
     setDragOverColumn(null);
   };
 
+  const displayColumns = sidebarOnRight ? [...columns].reverse() : columns;
+
   return (
     <thead className="bg-gray-50 sticky top-0 z-10">
       <tr>
         {sidebarOnRight && (
           <>
-            <th className="sticky left-0 z-30 bg-gray-50 px-3 py-2 text-center text-xs font-semibold text-gray-600 uppercase w-24 border-r border-gray-200 shadow-sm">
+            <th className="sticky left-0 z-30 bg-gray-50 px-3 py-2 text-center text-xs font-semibold text-gray-600 uppercase w-12 border-r border-gray-200 shadow-sm">
+              <button
+                onClick={onSelectAll}
+                className="p-1 hover:bg-gray-200 rounded transition-colors"
+                title={allSelected ? "Deselect all" : "Select all"}
+              >
+                {allSelected ? (
+                  <CheckSquare size={18} className="text-blue-600" />
+                ) : (
+                  <Square size={18} className="text-gray-400" />
+                )}
+              </button>
+            </th>
+
+            <th className="sticky left-10 z-30 bg-gray-50 px-3 py-2 text-center text-xs font-semibold text-gray-600 uppercase w-20 border-r border-gray-200 shadow-sm">
               Actions
             </th>
-            <th className="sticky left-[6rem] z-30 bg-gray-50 px-3 py-2 text-center text-xs font-semibold text-gray-600 uppercase w-20 border-r border-gray-200 shadow-sm">
+
+            <th className="sticky left-[8rem] z-30 bg-gray-50 px-3 py-2 text-center text-xs font-semibold text-gray-600 uppercase w-24 border-r border-gray-200 shadow-sm">
               No.
             </th>
           </>
         )}
 
-        {columns.map((column, idx) => (
-          <th
-            key={column.id}
-            draggable
-            onDragStart={(e) => handleDragStart(e, column.id)}
-            onDragOver={(e) => handleDragOver(e, column.id)}
-            onDrop={(e) => handleDrop(e, column.id)}
-            onDragEnd={handleDragEnd}
-            className={`relative px-2 sm:px-3 lg:px-4 py-2 sm:py-3 text-left text-xs font-semibold text-gray-600 uppercase border-r border-gray-200 transition-all ${
-              draggedColumn === column.id ? "opacity-50" : ""
-            } ${dragOverColumn === column.id ? "bg-blue-100" : ""}`}
-            style={{
-              width: `${getColumnWidth(column.id)}px`,
-              minWidth: `${getColumnWidth(column.id)}px`,
-              maxWidth: `${getColumnWidth(column.id)}px`,
-              cursor: "move",
-            }}
-          >
-            <div className="flex items-center justify-between gap-1 sm:gap-2">
-              {!sidebarOnRight && (
-                <div className="flex gap-0.5 sm:gap-1 flex-shrink-0 items-center">
-                  {idx === 0 && (
-                    <button
-                      onClick={onAddColumn}
-                      className="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-all shadow-md hover:shadow-lg"
-                      title="Add column"
-                    >
-                      <Plus size={12} className="sm:w-3.5 sm:h-3.5" />
-                    </button>
-                  )}
+        {displayColumns.map((column, idx) => {
+          const originalIdx = sidebarOnRight ? columns.length - 1 - idx : idx;
 
-                  <button
-                    onClick={() => onEditColumn(column)}
-                    className="p-1 hover:bg-gray-200 rounded transition-colors"
-                    title="Edit column"
-                  >
-                    <Edit2 size={14} className="sm:w-3.5 sm:h-3.5" />
-                  </button>
-                  <button
-                    onClick={() => onDeleteColumn(column.id)}
-                    className="p-1 hover:bg-red-100 text-red-600 rounded transition-colors"
-                    title="Delete column"
-                  >
-                    <Trash2 size={14} className="sm:w-3.5 sm:h-3.5" />
-                  </button>
-                </div>
-              )}
-
-              <div
-                className={`flex items-center gap-1 flex-1 min-w-0 ${
-                  sidebarOnRight ? "justify-start" : "justify-end"
-                }`}
-              >
-                {sidebarOnRight && (
-                  <GripVertical
-                    size={14}
-                    className="text-gray-400 flex-shrink-0 sm:w-3.5 sm:h-3.5"
-                  />
-                )}
-                <div className="truncate text-xs sm:text-xs">{column.name}</div>
+          return (
+            // {columns.map((column, idx) => (
+            <th
+              key={column.id}
+              draggable
+              onDragStart={(e) => handleDragStart(e, column.id)}
+              onDragOver={(e) => handleDragOver(e, column.id)}
+              onDrop={(e) => handleDrop(e, column.id)}
+              onDragEnd={handleDragEnd}
+              className={`relative px-2 sm:px-3 lg:px-4 py-2 sm:py-3 text-left text-xs font-semibold text-gray-600 uppercase border-r border-gray-200 transition-all ${
+                draggedColumn === column.id ? "opacity-50" : ""
+              } ${dragOverColumn === column.id ? "bg-blue-100" : ""}`}
+              style={{
+                width: `${getColumnWidth(column.id)}px`,
+                minWidth: `${getColumnWidth(column.id)}px`,
+                maxWidth: `${getColumnWidth(column.id)}px`,
+                cursor: "move",
+              }}
+            >
+              <div className="flex items-center justify-between gap-1 sm:gap-2">
                 {!sidebarOnRight && (
-                  <GripVertical
-                    size={14}
-                    className="text-gray-400 flex-shrink-0 sm:w-3.5 sm:h-3.5"
-                  />
+                  <div className="flex gap-0.5 sm:gap-1 flex-shrink-0 items-center">
+                    {/* {idx === 0 && ( */}
+                    {originalIdx === 0 && (
+                      <button
+                        onClick={onAddColumn}
+                        className="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-all shadow-md hover:shadow-lg"
+                        title="Add column"
+                      >
+                        <Plus size={12} className="sm:w-3.5 sm:h-3.5" />
+                      </button>
+                    )}
+
+                    <button
+                      onClick={() => onEditColumn(column)}
+                      className="p-1 hover:bg-gray-200 rounded transition-colors"
+                      title="Edit column"
+                    >
+                      <Edit2 size={14} className="sm:w-3.5 sm:h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => onDeleteColumn(column.id)}
+                      className="p-1 hover:bg-red-100 text-red-600 rounded transition-colors"
+                      title="Delete column"
+                    >
+                      <Trash2 size={14} className="sm:w-3.5 sm:h-3.5" />
+                    </button>
+                  </div>
+                )}
+
+                <div
+                  className={`flex items-center gap-1 flex-1 min-w-0 ${
+                    sidebarOnRight ? "justify-start" : "justify-end"
+                  }`}
+                >
+                  {sidebarOnRight && (
+                    <GripVertical
+                      size={14}
+                      className="text-gray-400 flex-shrink-0 sm:w-3.5 sm:h-3.5"
+                    />
+                  )}
+                  <div className="truncate text-xs sm:text-xs">
+                    {column.name}
+                  </div>
+                  {!sidebarOnRight && (
+                    <GripVertical
+                      size={14}
+                      className="text-gray-400 flex-shrink-0 sm:w-3.5 sm:h-3.5"
+                    />
+                  )}
+                </div>
+
+                {sidebarOnRight && (
+                  <div className="flex gap-0.5 sm:gap-1 flex-shrink-0 items-center">
+                    <button
+                      onClick={() => onEditColumn(column)}
+                      className="p-1 hover:bg-gray-200 rounded transition-colors"
+                      title="Edit column"
+                    >
+                      <Edit2 size={14} className="sm:w-3.5 sm:h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => onDeleteColumn(column.id)}
+                      className="p-1 hover:bg-red-100 text-red-600 rounded transition-colors"
+                      title="Delete column"
+                    >
+                      <Trash2 size={14} className="sm:w-3.5 sm:h-3.5" />
+                    </button>
+
+                    {idx === columns.length - 1 && (
+                      <button
+                        onClick={onAddColumn}
+                        className="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-all shadow-md hover:shadow-lg"
+                        title="Add column"
+                      >
+                        <Plus size={12} className="sm:w-3.5 sm:h-3.5" />
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
 
-              {sidebarOnRight && (
-                <div className="flex gap-0.5 sm:gap-1 flex-shrink-0 items-center">
-                  <button
-                    onClick={() => onEditColumn(column)}
-                    className="p-1 hover:bg-gray-200 rounded transition-colors"
-                    title="Edit column"
-                  >
-                    <Edit2 size={14} className="sm:w-3.5 sm:h-3.5" />
-                  </button>
-                  <button
-                    onClick={() => onDeleteColumn(column.id)}
-                    className="p-1 hover:bg-red-100 text-red-600 rounded transition-colors"
-                    title="Delete column"
-                  >
-                    <Trash2 size={14} className="sm:w-3.5 sm:h-3.5" />
-                  </button>
-
-                  {idx === columns.length - 1 && (
-                    <button
-                      onClick={onAddColumn}
-                      className="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-all shadow-md hover:shadow-lg"
-                      title="Add column"
-                    >
-                      <Plus size={12} className="sm:w-3.5 sm:h-3.5" />
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
-
-            <div
-              className={`absolute top-0 right-0 w-1 h-full cursor-col-resize group z-10 ${
-                resizingColumn === column.id ? "bg-blue-500" : ""
-              }`}
-              onMouseDown={(e) => handleMouseDown(e, column.id)}
-            >
-              <div className="w-3 h-full -ml-1 group-hover:bg-blue-400 transition-colors" />
-            </div>
-          </th>
-        ))}
+              <div
+                className={`absolute top-0 right-0 w-1 h-full cursor-col-resize group z-10 ${
+                  resizingColumn === column.id ? "bg-blue-500" : ""
+                }`}
+                onMouseDown={(e) => handleMouseDown(e, column.id)}
+              >
+                <div className="w-3 h-full -ml-1 group-hover:bg-blue-400 transition-colors" />
+              </div>
+            </th>
+          );
+        })}
 
         {!sidebarOnRight && (
           <>
-            <th className="sticky right-[4rem] sm:right-[6rem] md:right-[7rem] lg:right-[6rem] z-30 bg-gray-50 px-3 py-2 text-center text-xs font-semibold text-gray-600 uppercase w-20 border-l border-gray-200 shadow-sm">
+            <th className="sticky right-[8rem] z-30 bg-gray-50 px-3 py-2 text-center text-xs font-semibold text-gray-600 uppercase w-20 border-l border-gray-200 shadow-sm">
               No.
             </th>
-            <th className="sticky right-0 z-30 bg-gray-50 px-3 py-2 text-center text-xs font-semibold text-gray-600 uppercase w-24 border-l border-gray-200 shadow-sm">
+
+            <th className="sticky right-10 z-30 bg-gray-50 px-3 py-2 text-center text-xs font-semibold text-gray-600 uppercase w-24 border-l border-gray-200 shadow-sm">
               Actions
+            </th>
+
+            <th className="sticky right-0 z-30 bg-gray-50 px-3 py-2 text-center text-xs font-semibold text-gray-600 uppercase w-12 border-l border-gray-200 shadow-sm">
+              <button
+                onClick={onSelectAll}
+                className="p-1 hover:bg-gray-200 rounded transition-colors"
+                title={allSelected ? "Deselect all" : "Select all"}
+              >
+                {allSelected ? (
+                  <CheckSquare size={18} className="text-blue-600" />
+                ) : (
+                  <Square size={18} className="text-gray-400" />
+                )}
+              </button>
             </th>
           </>
         )}

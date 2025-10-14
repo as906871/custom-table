@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { Plus } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import EmptyState from "../TaskDay/Table/EmptyState";
 import ColumnModal from "../TaskDay/Table/ColumnModal";
 import TableRow from "../TaskDay/Table/TableRow";
@@ -14,15 +14,18 @@ import {
   deleteRow,
   reorderColumns,
   reorderRows,
+  selectRow,
+  deleteSelectedRows,
+  reorderSelectedRows,
+  selectAllRows,
 } from "../../../redux/reducer/tableReducer/TableReducer";
 import DeleteModal from "../../Common/DeleteModal";
 import { GetTableSheetData } from "../../../redux/action/tableAction/TableAction";
 
 const Task = () => {
   const dispatch = useDispatch();
-  const { columns, rows, tableData, tableLoading, tableError } = useSelector(
-    (state) => state.table
-  );
+  const { columns, rows, tableData, tableLoading, tableError, selectedRows } =
+    useSelector((state) => state.table);
 
   const { position } = useSelector((state) => state.sidebar);
   const sidebarOnRight = position === "left";
@@ -37,6 +40,8 @@ const Task = () => {
   const [optionInput, setOptionInput] = useState("");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
+
+  const [draggedRows, setDraggedRows] = useState([]);
 
   const handleAddColumn = () => {
     setColumnForm({ name: "", type: "text", options: [] });
@@ -101,8 +106,63 @@ const Task = () => {
     dispatch(reorderColumns({ fromIndex, toIndex }));
   };
 
-  const handleReorderRows = (draggedRowId, targetRowId) => {
-    dispatch(reorderRows({ draggedRowId, targetRowId }));
+    // const handleReorderRows = (draggedRowId, targetRowId) => {
+  //   dispatch(reorderRows({ draggedRowId, targetRowId }));
+  // };
+
+
+  const handleSelectRow = (rowId) => {
+    dispatch(selectRow(rowId));
+  };
+
+  const handleSelectAll = () => {
+    dispatch(selectAllRows());
+  };
+
+    // const handleDeleteSelected = () => {
+  //   if (selectedRows.length > 0) {
+  //     setDeleteTarget({ type: "multiple", ids: selectedRows });
+  //     setShowDeleteModal(true);
+  //   }
+  // };
+
+  // const confirmDeleteMultiple = () => {
+  //   dispatch(deleteSelectedRows());
+  //   setShowDeleteModal(false);
+  //   setDeleteTarget(null);
+  // };
+
+  const handleDragStart = (rowId) => {
+    if (selectedRows.includes(rowId)) {
+      setDraggedRows(selectedRows);
+    } else {
+      setDraggedRows([rowId]);
+      dispatch(selectRow(rowId));
+    }
+  };
+
+  const handleReorderRows = (targetRowId) => {
+    if (draggedRows.length === 0) return;
+
+    if (draggedRows.length === 1) {
+      const draggedRowId = draggedRows[0];
+      if (draggedRowId !== targetRowId) {
+        dispatch(reorderRows({ draggedRowId, targetRowId }));
+      }
+    } else {
+      dispatch(
+        reorderSelectedRows({
+          draggedRowIds: draggedRows,
+          targetRowId,
+        })
+      );
+    }
+
+    setDraggedRows([]);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedRows([]);
   };
 
   useEffect(() => {
@@ -134,8 +194,11 @@ const Task = () => {
   return (
     <div className="w-full h-full flex flex-col">
       <div className="flex-shrink-0 bg-white border-b border-gray-200 px-3 sm:px-4 lg:px-6 py-3 sm:py-4">
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-800">
+        <div className={`flex flex-col sm:flex-row sm:items-center gap-3 ${
+            !sidebarOnRight ? "flex-row-reverse justify-end" : "sm:justify-between"
+          }`}
+        >
+          <h2 className={`text-xl sm:text-2xl font-bold text-gray-800 ${ !sidebarOnRight ? "text-right sm:ml-4" : ""}`}>
             Table{" "}
             {tableData && (
               <span className="text-sm text-gray-500 font-normal ml-2">
@@ -143,7 +206,7 @@ const Task = () => {
               </span>
             )}
           </h2>
-          <div className="flex gap-2">
+          <div className={`flex gap-2 ${ !sidebarOnRight ? "sm:order-first sm:mr-auto" : "sm:order-last"}`}>
             {columns?.length === 0 && (
               <button
                 onClick={handleAddColumn}
@@ -162,8 +225,28 @@ const Task = () => {
                 <span className="whitespace-nowrap">Add Row</span>
               </button>
             )}
+
+                 {/* {selectedRows.length > 0 && (
+              <button
+                onClick={handleDeleteSelected}
+                className="flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 bg-red-600 text-white text-sm sm:text-base rounded-lg hover:bg-red-700 transition-colors"
+              >
+                <Trash2 size={18} className="sm:w-5 sm:h-5" />
+                <span className="whitespace-nowrap">
+                  Delete Selected ({selectedRows.length})
+                </span>
+              </button>
+            )} */}
           </div>
         </div>
+           {/* {selectedRows.length > 0 && (
+          <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm text-blue-800">
+              <strong>{selectedRows.length}</strong> row
+              {selectedRows.length !== 1 ? "s" : ""} selected.
+            </p>
+          </div>
+        )} */}
       </div>
 
       <div className="flex-1 overflow-auto">
@@ -182,6 +265,10 @@ const Task = () => {
                   onAddColumn={handleAddColumn}
                   onReorderColumns={handleReorderColumns}
                   sidebarOnRight={sidebarOnRight}
+                  allSelected={
+                    selectedRows.length === rows.length && rows.length > 0
+                  }
+                  onSelectAll={handleSelectAll}
                 />
                 <tbody className="bg-white divide-y divide-gray-200">
                   {rows?.length === 0 ? (
@@ -203,6 +290,11 @@ const Task = () => {
                         onAddRow={handleAddRow}
                         onReorderRows={handleReorderRows}
                         sidebarOnRight={sidebarOnRight}
+                        onDragStart={handleDragStart}
+                        onDragEnd={handleDragEnd}
+                        isSelected={selectedRows.includes(row?.id)}
+                        onSelectRow={handleSelectRow}
+                        isDragging={draggedRows.includes(row?.id)}
                       />
                     ))
                   )}
@@ -233,6 +325,28 @@ const Task = () => {
           deleteTarget?.type === "column" ? "column" : "row"
         }? This action cannot be undone.`}
       />
+
+       {/* <DeleteModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={
+          deleteTarget?.type === "multiple"
+            ? confirmDeleteMultiple
+            : confirmDelete
+        }
+        title="Confirm Deletion"
+        message={
+          deleteTarget?.type === "multiple"
+            ? `Are you sure you want to delete ${
+                selectedRows.length
+              } selected row${
+                selectedRows.length !== 1 ? "s" : ""
+              }? This action cannot be undone.`
+            : `Are you sure you want to delete this ${
+                deleteTarget?.type === "column" ? "column" : "row"
+              }? This action cannot be undone.`
+        }
+      /> */}
     </div>
   );
 };
